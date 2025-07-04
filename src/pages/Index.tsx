@@ -6,16 +6,16 @@ import { Brain, MessageSquare, Database, Globe, Zap, Shield } from "lucide-react
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-gradient-card">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-lg border-b border-border/50">
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
                 <Brain className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold bg-gradient-text bg-clip-text text-transparent">
+              <span className="text-xl font-bold text-foreground">
                 HackGPT
               </span>
             </div>
@@ -25,14 +25,13 @@ const Index = () => {
               <a href="#features" className="text-muted-foreground hover:text-primary transition-colors">Features</a>
               <Link to="/auth" className="text-muted-foreground hover:text-primary transition-colors">Login</Link>
               <Link to="/auth">
-                <Button variant="gradient" size="sm">Get Started</Button>
+                <Button variant="primary" size="sm">Get Started</Button>
               </Link>
             </nav>
 
-            {/* Mobile menu button */}
             <div className="md:hidden">
               <Link to="/auth">
-                <Button variant="gradient" size="sm">Get Started</Button>
+                <Button variant="primary" size="sm">Get Started</Button>
               </Link>
             </div>
           </div>
@@ -45,9 +44,9 @@ const Index = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
               <div className="space-y-4">
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight">
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight text-foreground">
                   Transform{" "}
-                  <span className="bg-gradient-text bg-clip-text text-transparent">
+                  <span className="text-primary">
                     Hackathon Data
                   </span>{" "}
                   Into Intelligent Conversations
@@ -59,7 +58,7 @@ const Index = () => {
               
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link to="/auth">
-                  <Button variant="gradient" size="lg" className="w-full sm:w-auto">
+                  <Button variant="primary" size="lg" className="w-full sm:w-auto">
                     Try HackGPT Free
                   </Button>
                 </Link>
@@ -68,10 +67,10 @@ const Index = () => {
 
             {/* Chat Demo */}
             <div className="relative">
-              <Card className="bg-card/50 backdrop-blur-sm border-border/50 max-w-md ml-auto">
+              <Card className="bg-card border-border shadow-card max-w-md ml-auto">
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-gradient-primary flex items-center justify-center">
+                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
                       <Brain className="w-3 h-3 text-primary-foreground" />
                     </div>
                     <span className="font-medium">HackGPT Assistant</span>
@@ -80,15 +79,15 @@ const Index = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
-                    <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="bg-muted rounded-lg p-3">
                       <p className="text-sm">What are the prizes for this hackathon?</p>
                     </div>
-                    <div className="bg-gradient-primary rounded-lg p-3">
+                    <div className="bg-primary rounded-lg p-3">
                       <p className="text-sm text-primary-foreground">
                         The hackathon offers $50,000 in total prizes including...
                       </p>
                     </div>
-                    <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="bg-muted rounded-lg p-3">
                       <p className="text-sm">When is the submission deadline?</p>
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground text-sm">
@@ -113,7 +112,7 @@ const Index = () => {
           <div className="text-center space-y-4 mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold">
               Everything You Need to{" "}
-              <span className="bg-gradient-text bg-clip-text text-transparent">
+              <span className="text-primary">
                 Master Events
               </span>
             </h2>
@@ -123,10 +122,10 @@ const Index = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="bg-card/50 backdrop-blur-sm border-border/50 hover:shadow-glow transition-all duration-300">
+            <Card className="bg-card border-border shadow-card hover:shadow-hover transition-all duration-200">
               <CardHeader>
-                <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center mb-4">
-                  <Globe className="w-6 h-6 text-blue-400" />
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <Globe className="w-6 h-6 text-primary" />
                 </div>
                 <CardTitle>Instant Event Intelligence</CardTitle>
                 <CardDescription>
@@ -135,10 +134,10 @@ const Index = () => {
               </CardHeader>
             </Card>
 
-            <Card className="bg-card/50 backdrop-blur-sm border-border/50 hover:shadow-glow transition-all duration-300">
+            <Card className="bg-card border-border shadow-card hover:shadow-hover transition-all duration-200">
               <CardHeader>
-                <div className="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center mb-4">
-                  <MessageSquare className="w-6 h-6 text-green-400" />
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <MessageSquare className="w-6 h-6 text-primary" />
                 </div>
                 <CardTitle>Smart Q&A System</CardTitle>
                 <CardDescription>
@@ -147,10 +146,10 @@ const Index = () => {
               </CardHeader>
             </Card>
 
-            <Card className="bg-card/50 backdrop-blur-sm border-border/50 hover:shadow-glow transition-all duration-300">
+            <Card className="bg-card border-border shadow-card hover:shadow-hover transition-all duration-200">
               <CardHeader>
-                <div className="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center mb-4">
-                  <Database className="w-6 h-6 text-purple-400" />
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <Database className="w-6 h-6 text-primary" />
                 </div>
                 <CardTitle>Unified Knowledge Hub</CardTitle>
                 <CardDescription>
@@ -168,7 +167,7 @@ const Index = () => {
           <div className="text-center space-y-4 mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold">
               Your Command Center for{" "}
-              <span className="bg-gradient-text bg-clip-text text-transparent">
+              <span className="text-primary">
                 Event Intelligence
               </span>
             </h2>
@@ -178,15 +177,15 @@ const Index = () => {
           </div>
 
           <div className="relative">
-            <Card className="bg-card/30 backdrop-blur-sm border-border/50 overflow-hidden">
+            <Card className="bg-card border-border shadow-card overflow-hidden">
               <CardContent className="p-0">
-                <div className="bg-gradient-card p-6">
+                <div className="bg-secondary p-6">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-4">
                       <h3 className="text-lg font-semibold">Dashboard</h3>
                       <Badge variant="secondary">3 Active Events</Badge>
                     </div>
-                    <Button variant="gradient" size="sm">Add Event</Button>
+                    <Button variant="primary" size="sm">Add Event</Button>
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -202,7 +201,7 @@ const Index = () => {
                           { name: "MIT Hackathon", status: "Ready", color: "green" },
                           { name: "ETHGlobal Paris", status: "Ready", color: "green" }
                         ].map((event, index) => (
-                          <div key={index} className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
+                          <div key={index} className="flex items-center justify-between p-3 bg-background rounded-lg border border-border">
                             <div className="flex items-center gap-2">
                               <div className={`w-2 h-2 rounded-full ${event.color === 'green' ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
                               <span className="text-sm">{event.name}</span>
@@ -221,16 +220,16 @@ const Index = () => {
                         <Brain className="w-4 h-4" />
                         AI Assistant
                       </h4>
-                      <div className="space-y-3 p-4 bg-background/50 rounded-lg min-h-[200px]">
-                        <div className="bg-muted/50 rounded-lg p-3 max-w-[80%]">
+                      <div className="space-y-3 p-4 bg-background rounded-lg border border-border min-h-[200px]">
+                        <div className="bg-muted rounded-lg p-3 max-w-[80%]">
                           <p className="text-sm">What are the main tracks for TechCrunch Disrupt?</p>
                         </div>
-                        <div className="bg-gradient-primary rounded-lg p-3 max-w-[85%] ml-auto">
+                        <div className="bg-primary rounded-lg p-3 max-w-[85%] ml-auto">
                           <p className="text-sm text-primary-foreground">
                             TechCrunch Disrupt 2024 features 5 main tracks: AI/ML, FinTech, HealthTech, Climate Tech, and Future of Work. Each track has specific judging criteria and specialized mentors.
                           </p>
                         </div>
-                        <div className="bg-muted/50 rounded-lg p-3 max-w-[70%]">
+                        <div className="bg-muted rounded-lg p-3 max-w-[70%]">
                           <p className="text-sm">When is the demo day?</p>
                         </div>
                       </div>
@@ -242,7 +241,7 @@ const Index = () => {
             
             <div className="text-center mt-8">
               <Link to="/auth">
-                <Button variant="gradient" size="lg">Experience This Dashboard</Button>
+                <Button variant="primary" size="lg">Experience This Dashboard</Button>
               </Link>
             </div>
           </div>
@@ -250,14 +249,14 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border/50 bg-card/30 backdrop-blur-sm">
+      <footer className="border-t border-border bg-secondary">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex flex-col items-center space-y-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
                 <Brain className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold bg-gradient-text bg-clip-text text-transparent">
+              <span className="text-xl font-bold text-foreground">
                 HackGPT
               </span>
             </div>

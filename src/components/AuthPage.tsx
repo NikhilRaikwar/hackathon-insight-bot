@@ -113,7 +113,7 @@ export const AuthPage = () => {
                       disabled={loading}
                     />
                   </div>
-                  <Button type="submit" className="w-full" variant="gradient" disabled={loading}>
+                  <Button type="submit" className="w-full" variant="primary" disabled={loading}>
                     {loading ? 'Signing In...' : 'Sign In'}
                   </Button>
                 </form>
@@ -144,7 +144,7 @@ export const AuthPage = () => {
                       minLength={6}
                     />
                   </div>
-                  <Button type="submit" className="w-full" variant="gradient" disabled={loading}>
+                  <Button type="submit" className="w-full" variant="primary" disabled={loading}>
                     {loading ? 'Creating Account...' : 'Sign Up'}
                   </Button>
                 </form>

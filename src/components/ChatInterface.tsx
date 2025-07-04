@@ -271,7 +271,7 @@ export const ChatInterface = ({ eventId, onBack }: ChatInterfaceProps) => {
                   disabled={loading}
                   className="flex-1"
                 />
-                <Button type="submit" disabled={loading} variant="gradient" size="sm">
+                <Button type="submit" disabled={loading} variant="primary" size="sm">
                   <Send className="h-4 w-4" />
                 </Button>
               </form>

@@ -170,7 +170,7 @@ export const Dashboard = () => {
                       required
                     />
                   </div>
-                  <Button type="submit" className="w-full" variant="gradient" disabled={submitting}>
+                  <Button type="submit" className="w-full" variant="primary" disabled={submitting}>
                     {submitting ? 'Submitting...' : 'Submit URL'}
                   </Button>
                 </form>
@@ -225,7 +225,7 @@ export const Dashboard = () => {
                           </span>
                           <Button
                             size="sm"
-                            variant="gradient"
+                            variant="primary"
                             onClick={() => setSelectedEventId(event.id)}
                             disabled={event.status !== 'completed'}
                           >
