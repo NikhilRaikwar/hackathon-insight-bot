@@ -28,7 +28,7 @@ export const AuthPage = () => {
         toast.error('Failed to sign in: ' + error.message);
       } else {
         toast.success('Welcome back!');
-        navigate('/');
+        navigate('/dashboard');
       }
     } catch (error) {
       toast.error('An unexpected error occurred');

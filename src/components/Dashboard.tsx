@@ -6,6 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
+import { AppSidebar } from '@/components/AppSidebar';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ChatInterface } from './ChatInterface';
@@ -20,7 +22,7 @@ interface Event {
 }
 
 export const Dashboard = () => {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -119,128 +121,126 @@ export const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-card">
-      {/* Header */}
-      <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <h1 className="text-xl font-semibold bg-gradient-primary bg-clip-text text-transparent">
-              Event Insight Bot
-            </h1>
-            <div className="flex items-center gap-4">
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-background">
+        <AppSidebar />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 px-4 border-b border-border">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <div className="flex-1">
               <span className="text-sm text-muted-foreground">
-                Welcome, {user?.email}
+                Welcome back, {user?.email}
               </span>
-              <Button variant="outline" onClick={signOut}>
-                Sign Out
-              </Button>
+            </div>
+          </header>
+          
+          <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+            <div className="grid auto-rows-min gap-4 md:grid-cols-3 mt-4">
+              {/* URL Submission */}
+              <div className="aspect-video rounded-xl bg-card border border-border p-4">
+                <Card className="h-full border-0 shadow-none">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">Submit Event URL</CardTitle>
+                    <CardDescription className="text-sm">
+                      Add a hackathon or event URL to create a custom Q&A chatbot
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <form onSubmit={handleSubmitUrl} className="space-y-3">
+                      <div className="space-y-1">
+                        <Label htmlFor="name" className="text-xs">Event Name</Label>
+                        <Input
+                          id="name"
+                          name="name"
+                          placeholder="e.g., DevPost Hackathon 2024"
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="url" className="text-xs">Event URL</Label>
+                        <Input
+                          id="url"
+                          name="url"
+                          type="url"
+                          placeholder="https://example.com/hackathon"
+                          required
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <Button type="submit" className="w-full h-8 text-sm" disabled={submitting}>
+                        {submitting ? 'Submitting...' : 'Submit URL'}
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Events List */}
+              <div className="md:col-span-2">
+                <Card className="h-full">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">Your Events</CardTitle>
+                    <CardDescription className="text-sm">
+                      Manage your submitted events and chat with their AI assistants
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {loading ? (
+                      <div className="text-center py-8">
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        <p className="mt-2 text-muted-foreground text-sm">Loading events...</p>
+                      </div>
+                    ) : events.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-muted-foreground text-sm">No events submitted yet.</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Submit your first event URL to get started!
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {events.map((event) => (
+                          <div key={event.id} className="p-3 border border-border rounded-lg bg-background">
+                            <div className="flex items-start justify-between mb-2">
+                              <h3 className="font-medium text-sm">{event.name}</h3>
+                              <Badge className={getStatusColor(event.status)} variant="outline">
+                                {event.status}
+                              </Badge>
+                            </div>
+                            {event.description && (
+                              <p className="text-xs text-muted-foreground mb-2">
+                                {event.description}
+                              </p>
+                            )}
+                            <p className="text-xs text-muted-foreground mb-2 break-all">
+                              {event.original_url}
+                            </p>
+                            <Separator className="my-2" />
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-muted-foreground">
+                                Added {new Date(event.created_at).toLocaleDateString()}
+                              </span>
+                              <Button
+                                size="sm"
+                                onClick={() => setSelectedEventId(event.id)}
+                                disabled={event.status !== 'completed'}
+                                className="h-7 text-xs"
+                              >
+                                {event.status === 'completed' ? 'Chat' : 'Processing...'}
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* URL Submission */}
-          <div className="lg:col-span-1">
-            <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-              <CardHeader>
-                <CardTitle>Submit Event URL</CardTitle>
-                <CardDescription>
-                  Add a hackathon or event URL to create a custom Q&A chatbot
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmitUrl} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Event Name</Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      placeholder="e.g., DevPost Hackathon 2024"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="url">Event URL</Label>
-                    <Input
-                      id="url"
-                      name="url"
-                      type="url"
-                      placeholder="https://example.com/hackathon"
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" variant="primary" disabled={submitting}>
-                    {submitting ? 'Submitting...' : 'Submit URL'}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Events List */}
-          <div className="lg:col-span-2">
-            <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-              <CardHeader>
-                <CardTitle>Your Events</CardTitle>
-                <CardDescription>
-                  Manage your submitted events and chat with their AI assistants
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="text-center py-8">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    <p className="mt-2 text-muted-foreground">Loading events...</p>
-                  </div>
-                ) : events.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground">No events submitted yet.</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Submit your first event URL to get started!
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {events.map((event) => (
-                      <div key={event.id} className="p-4 border border-border/50 rounded-lg bg-background/50">
-                        <div className="flex items-start justify-between mb-2">
-                          <h3 className="font-medium">{event.name}</h3>
-                          <Badge className={getStatusColor(event.status)}>
-                            {event.status}
-                          </Badge>
-                        </div>
-                        {event.description && (
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {event.description}
-                          </p>
-                        )}
-                        <p className="text-xs text-muted-foreground mb-3">
-                          {event.original_url}
-                        </p>
-                        <Separator className="my-3" />
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs text-muted-foreground">
-                            Added {new Date(event.created_at).toLocaleDateString()}
-                          </span>
-                          <Button
-                            size="sm"
-                            variant="primary"
-                            onClick={() => setSelectedEventId(event.id)}
-                            disabled={event.status !== 'completed'}
-                          >
-                            {event.status === 'completed' ? 'Chat' : 'Processing...'}
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        </SidebarInset>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
