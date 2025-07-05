@@ -43,8 +43,13 @@ interface Event {
   created_at: string;
 }
 
-export function AppSidebar({ onEventSelect, ...props }: React.ComponentProps<typeof Sidebar> & { 
-  onEventSelect?: (eventId: string) => void 
+export function AppSidebar({ 
+  onEventSelect, 
+  selectedEventId,
+  ...props 
+}: React.ComponentProps<typeof Sidebar> & { 
+  onEventSelect?: (eventId: string) => void;
+  selectedEventId?: string | null;
 }) {
   const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);

@@ -23,9 +23,10 @@ interface ChatInterfaceProps {
   eventId: string;
   onBack: () => void;
   onEventSelect?: (eventId: string) => void;
+  isEmbedded?: boolean;
 }
 
-export const ChatInterface = ({ eventId, onBack, onEventSelect }: ChatInterfaceProps) => {
+export const ChatInterface = ({ eventId, onBack, onEventSelect, isEmbedded = false }: ChatInterfaceProps) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
@@ -191,11 +192,10 @@ export const ChatInterface = ({ eventId, onBack, onEventSelect }: ChatInterfaceP
     }
   };
 
-  return (
-    <SidebarProvider>
-      <AppSidebar onEventSelect={onEventSelect || (() => {})} />
-      <SidebarInset>
-        {/* Header */}
+  const ChatContent = () => (
+    <>
+      {/* Header */}
+      {!isEmbedded && (
         <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm">
           <div className="flex items-center h-16 gap-4 px-4">
             <Button variant="ghost" onClick={onBack} size="sm">
@@ -208,92 +208,105 @@ export const ChatInterface = ({ eventId, onBack, onEventSelect }: ChatInterfaceP
             </div>
           </div>
         </header>
+      )}
 
-        {/* Chat Area */}
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <Card className="h-full bg-card/50 backdrop-blur-sm border-border/50 flex flex-col">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-center text-sm text-muted-foreground">
-                Ask anything about this event!
-              </CardTitle>
-            </CardHeader>
-            
-            <CardContent className="flex-1 flex flex-col p-0">
-              {/* Messages */}
-              <ScrollArea className="flex-1 px-6" ref={scrollAreaRef}>
-                <div className="space-y-4 pb-4">
-                  {messages.length === 0 ? (
-                    <div className="text-center py-8">
-                      <p className="text-muted-foreground">
-                        Start a conversation by asking about the event details, prizes, rules, or anything else!
-                      </p>
+      {/* Chat Area */}
+      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+        <Card className="h-full bg-card/50 backdrop-blur-sm border-border/50 flex flex-col">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-center text-sm text-muted-foreground">
+              Ask anything about this event!
+            </CardTitle>
+          </CardHeader>
+          
+          <CardContent className="flex-1 flex flex-col p-0">
+            {/* Messages */}
+            <ScrollArea className="flex-1 px-6" ref={scrollAreaRef}>
+              <div className="space-y-4 pb-4">
+                {messages.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">
+                      Start a conversation by asking about the event details, prizes, rules, or anything else!
+                    </p>
+                  </div>
+                ) : (
+                  messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`flex gap-3 ${
+                        message.role === 'user' ? 'justify-end' : 'justify-start'
+                      }`}
+                    >
+                      {message.role === 'assistant' && (
+                        <Avatar className="h-8 w-8 bg-primary/10">
+                          <AvatarFallback className="text-primary text-xs">
+                            <Bot className="h-4 w-4" />
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                       <div
+                         className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                           message.role === 'user'
+                             ? 'bg-primary text-primary-foreground ml-12'
+                             : 'bg-muted text-foreground mr-12'
+                         }`}
+                       >
+                         <div 
+                           className="text-sm whitespace-pre-wrap font-medium leading-relaxed"
+                           dangerouslySetInnerHTML={{
+                             __html: message.content
+                               .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                               .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                               .replace(/`(.*?)`/g, '<code class="bg-muted px-1 py-0.5 rounded text-xs">$1</code>')
+                               .replace(/\n/g, '<br/>')
+                           }}
+                         />
+                         <p className="text-xs opacity-50 mt-2">
+                           {new Date(message.created_at).toLocaleTimeString()}
+                         </p>
+                       </div>
+                      {message.role === 'user' && (
+                        <Avatar className="h-8 w-8 bg-muted">
+                          <AvatarFallback className="text-xs">
+                            {user?.email?.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
                     </div>
-                  ) : (
-                    messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`flex gap-3 ${
-                          message.role === 'user' ? 'justify-end' : 'justify-start'
-                        }`}
-                      >
-                        {message.role === 'assistant' && (
-                          <Avatar className="h-8 w-8 bg-primary/10">
-                            <AvatarFallback className="text-primary text-xs">
-                              <Bot className="h-4 w-4" />
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-                         <div
-                           className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                             message.role === 'user'
-                               ? 'bg-primary text-primary-foreground ml-12'
-                               : 'bg-muted text-foreground mr-12'
-                           }`}
-                         >
-                           <div 
-                             className="text-sm whitespace-pre-wrap font-medium leading-relaxed"
-                             dangerouslySetInnerHTML={{
-                               __html: message.content
-                                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                                 .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                                 .replace(/`(.*?)`/g, '<code class="bg-muted px-1 py-0.5 rounded text-xs">$1</code>')
-                                 .replace(/\n/g, '<br/>')
-                             }}
-                           />
-                           <p className="text-xs opacity-50 mt-2">
-                             {new Date(message.created_at).toLocaleTimeString()}
-                           </p>
-                         </div>
-                        {message.role === 'user' && (
-                          <Avatar className="h-8 w-8 bg-muted">
-                            <AvatarFallback className="text-xs">
-                              {user?.email?.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </ScrollArea>
-
-              {/* Input Form */}
-              <div className="border-t border-border/50 p-4">
-                <form onSubmit={handleSendMessage} className="flex gap-2">
-                  <Input
-                    name="message"
-                    placeholder="Ask about event details, prizes, rules..."
-                    disabled={loading}
-                    className="flex-1"
-                  />
-                  <Button type="submit" disabled={loading} size="sm">
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </form>
+                  ))
+                )}
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </ScrollArea>
+
+            {/* Input Form */}
+            <div className="border-t border-border/50 p-4">
+              <form onSubmit={handleSendMessage} className="flex gap-2">
+                <Input
+                  name="message"
+                  placeholder="Ask about event details, prizes, rules..."
+                  disabled={loading}
+                  className="flex-1"
+                />
+                <Button type="submit" disabled={loading} size="sm">
+                  <Send className="h-4 w-4" />
+                </Button>
+              </form>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </>
+  );
+
+  if (isEmbedded) {
+    return <ChatContent />;
+  }
+
+  return (
+    <SidebarProvider>
+      <AppSidebar onEventSelect={onEventSelect || (() => {})} />
+      <SidebarInset>
+        <ChatContent />
       </SidebarInset>
       <SmoothCursor />
     </SidebarProvider>

@@ -34,6 +34,7 @@ export const Dashboard = () => {
   const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [selectedEventName, setSelectedEventName] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -63,6 +64,12 @@ export const Dashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEventSelect = (eventId: string) => {
+    const event = events.find(e => e.id === eventId);
+    setSelectedEventId(eventId);
+    setSelectedEventName(event?.name || '');
   };
 
   const handleSubmitUrl = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -102,8 +109,9 @@ export const Dashboard = () => {
         toast.success('URL submitted! Crawling started...');
         loadEvents();
         (e.target as HTMLFormElement).reset();
-        // Automatically redirect to the chat page
+        // Automatically open the chat for the new event
         setSelectedEventId(data.id);
+        setSelectedEventName(data.name);
       }
     } catch (error) {
       if (error instanceof TypeError) {
@@ -117,20 +125,9 @@ export const Dashboard = () => {
     }
   };
 
-
-  if (selectedEventId) {
-    return (
-      <ChatInterface 
-        eventId={selectedEventId} 
-        onBack={() => setSelectedEventId(null)}
-        onEventSelect={setSelectedEventId}
-      />
-    );
-  }
-
   return (
     <SidebarProvider>
-      <AppSidebar onEventSelect={setSelectedEventId} />
+      <AppSidebar onEventSelect={handleEventSelect} selectedEventId={selectedEventId} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2">
           <div className="flex items-center gap-2 px-4">
@@ -146,72 +143,98 @@ export const Dashboard = () => {
                     HackGPT Dashboard
                   </BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>Home</BreadcrumbPage>
-                </BreadcrumbItem>
+                {selectedEventName && (
+                  <>
+                    <BreadcrumbSeparator className="hidden md:block" />
+                    <BreadcrumbItem>
+                      <BreadcrumbPage>{selectedEventName}</BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </>
+                )}
+                {!selectedEventName && (
+                  <>
+                    <BreadcrumbSeparator className="hidden md:block" />
+                    <BreadcrumbItem>
+                      <BreadcrumbPage>Home</BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </>
+                )}
               </BreadcrumbList>
             </Breadcrumb>
           </div>
         </header>
+        
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          {/* Welcome Message */}
-          <div className="text-center py-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              Welcome, {getUserDisplayName()}!
-            </h1>
-            <p className="text-muted-foreground">
-              Chat with HackGPT about your hackathons and events
-            </p>
-          </div>
+          {selectedEventId ? (
+            <ChatInterface 
+              eventId={selectedEventId} 
+              onBack={() => {
+                setSelectedEventId(null);
+                setSelectedEventName('');
+              }}
+              onEventSelect={handleEventSelect}
+              isEmbedded={true}
+            />
+          ) : (
+            <>
+              {/* Welcome Message */}
+              <div className="text-center py-8">
+                <h1 className="text-3xl font-bold text-foreground mb-2">
+                  Welcome, {getUserDisplayName()}!
+                </h1>
+                <p className="text-muted-foreground">
+                  Chat with HackGPT about your hackathons and events
+                </p>
+              </div>
 
-          {/* Event URL Form */}
-          <div className="max-w-md mx-auto w-full relative">
-            <MagicCard
-              gradientColor="#3B82F6"
-              className="bg-card border-border shadow-lg hover:shadow-xl transition-all duration-300"
-            >
-              <Card className="border-none shadow-none bg-transparent">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    Add Event URL
-                  </CardTitle>
-                  <CardDescription>
-                    Add a hackathon or event URL to create a custom Q&A chatbot
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleSubmitUrl} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Event Name</Label>
-                      <Input
-                        id="name"
-                        name="name"
-                        placeholder="e.g., DevPost Hackathon 2024"
-                        required
-                        className="border-border/50 focus:border-primary/50"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="url">Event URL</Label>
-                      <Input
-                        id="url"
-                        name="url"
-                        type="url"
-                        placeholder="https://example.com/hackathon"
-                        required
-                        className="border-border/50 focus:border-primary/50"
-                      />
-                    </div>
-                    <Button type="submit" className="w-full" disabled={submitting}>
-                      {submitting ? 'Submitting...' : 'Submit URL'}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-            </MagicCard>
-          </div>
-
+              {/* Event URL Form */}
+              <div className="max-w-md mx-auto w-full relative">
+                <MagicCard
+                  gradientColor="#3B82F6"
+                  className="bg-card border-border shadow-lg hover:shadow-xl transition-all duration-300"
+                >
+                  <Card className="border-none shadow-none bg-transparent">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        Add Event URL
+                      </CardTitle>
+                      <CardDescription>
+                        Add a hackathon or event URL to create a custom Q&A chatbot
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <form onSubmit={handleSubmitUrl} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="name">Event Name</Label>
+                          <Input
+                            id="name"
+                            name="name"
+                            placeholder="e.g., DevPost Hackathon 2024"
+                            required
+                            className="border-border/50 focus:border-primary/50"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="url">Event URL</Label>
+                          <Input
+                            id="url"
+                            name="url"
+                            type="url"
+                            placeholder="https://example.com/hackathon"
+                            required
+                            className="border-border/50 focus:border-primary/50"
+                          />
+                        </div>
+                        <Button type="submit" className="w-full" disabled={submitting}>
+                          {submitting ? 'Submitting...' : 'Submit URL'}
+                        </Button>
+                      </form>
+                    </CardContent>
+                  </Card>
+                </MagicCard>
+              </div>
+            </>
+          )}
         </div>
       </SidebarInset>
       <SmoothCursor />
