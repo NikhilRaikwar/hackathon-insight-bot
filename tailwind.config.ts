@@ -3,8 +3,10 @@ import type { Config } from "tailwindcss";
 export default {
 	darkMode: ["class"],
 	content: [
-		"./index.html",
-		"./src/**/*.{js,ts,jsx,tsx}",
+		"./pages/**/*.{ts,tsx}",
+		"./components/**/*.{ts,tsx}",
+		"./app/**/*.{ts,tsx}",
+		"./src/**/*.{ts,tsx}",
 	],
 	prefix: "",
 	theme: {
@@ -64,13 +66,13 @@ export default {
 				}
 			},
 			boxShadow: {
-				card: 'var(--shadow-card)',
-				hover: 'var(--shadow-hover)',
-				focus: 'var(--shadow-focus)'
+				'card': 'var(--shadow-card)',
+				'hover': 'var(--shadow-hover)',
+				'focus': 'var(--shadow-focus)'
 			},
 			transitionProperty: {
-				smooth: 'var(--transition-smooth)',
-				fast: 'var(--transition-fast)'
+				'smooth': 'var(--transition-smooth)',
+				'fast': 'var(--transition-fast)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

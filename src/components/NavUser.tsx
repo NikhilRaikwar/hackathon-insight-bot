@@ -25,7 +25,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/hooks/useAuth"
-import { useNavigate } from "react-router-dom"
 
 export function NavUser({
   user,
@@ -38,7 +37,6 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const { signOut } = useAuth()
-  const navigate = useNavigate()
 
   const getInitials = (name: string, email: string) => {
     if (name && name !== email) {
@@ -90,14 +88,7 @@ export function NavUser({
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={async () => {
-              try {
-                await signOut();
-                navigate('/');
-              } catch (error) {
-                console.error('Error signing out:', error);
-              }
-            }}>
+            <DropdownMenuItem onClick={signOut}>
               <LogOut />
               Log out
             </DropdownMenuItem>

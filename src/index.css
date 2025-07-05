@@ -106,14 +106,4 @@ All colors MUST be HSL.
   .input-minimal {
     @apply bg-input border border-border rounded-md px-3 py-2 text-sm;
   }
-
-  /* Button gradient effect */
-  .button-gradient {
-    @apply bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground transition-all duration-300;
-  }
-
-  /* Glass effect */
-  .glass {
-    @apply bg-white/10 backdrop-blur-sm border border-white/20;
-  }
 }

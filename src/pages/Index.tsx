@@ -1,21 +1,45 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
-import { Brain, MessageSquare, Database, Globe, Zap, Shield, Link as LinkIcon } from "lucide-react";
-import Navigation from "@/components/Navigation";
-import { MagicCard } from "@/components/magicui/magic-card";
-import { DashboardPreview } from "@/components/DashboardPreview";
+import { Brain, MessageSquare, Database, Globe, Zap, Shield } from "lucide-react";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+                <Brain className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <span className="text-xl font-bold text-foreground">
+                HackGPT
+              </span>
+            </div>
+            
+            <nav className="hidden md:flex items-center gap-8">
+              <a href="#home" className="text-foreground hover:text-primary transition-colors">Home</a>
+              <a href="#features" className="text-muted-foreground hover:text-primary transition-colors">Features</a>
+              <Link to="/auth" className="text-muted-foreground hover:text-primary transition-colors">Login</Link>
+              <Link to="/auth">
+                <Button variant="primary" size="sm">Get Started</Button>
+              </Link>
+            </nav>
+
+            <div className="md:hidden">
+              <Link to="/auth">
+                <Button variant="primary" size="sm">Get Started</Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </header>
 
       {/* Hero Section */}
-      <section id="home" className="relative overflow-hidden pt-24">
+      <section id="home" className="relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
@@ -43,77 +67,183 @@ const Index = () => {
 
             {/* Chat Demo */}
             <div className="relative">
-              <MagicCard
-                gradientColor="rgba(120, 119, 198, 0.3)"
-                className="relative overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5" />
-                <div className="relative z-10">
-                  <Card className="border-0 shadow-none bg-transparent">
-                    <CardHeader className="text-center pb-6">
-                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                        <Brain className="w-6 h-6 text-primary" />
+              <Card className="bg-card border-border shadow-card max-w-md ml-auto">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                      <Brain className="w-3 h-3 text-primary-foreground" />
+                    </div>
+                    <span className="font-medium">HackGPT Assistant</span>
+                    <div className="w-2 h-2 rounded-full bg-green-500 ml-auto"></div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="bg-muted rounded-lg p-3">
+                      <p className="text-sm">What are the prizes for this hackathon?</p>
+                    </div>
+                    <div className="bg-primary rounded-lg p-3">
+                      <p className="text-sm text-primary-foreground">
+                        The hackathon offers $50,000 in total prizes including...
+                      </p>
+                    </div>
+                    <div className="bg-muted rounded-lg p-3">
+                      <p className="text-sm">When is the submission deadline?</p>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 rounded-full bg-primary animate-bounce"></div>
+                        <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                        <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                       </div>
-                      <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                        AI Chat Demo
-                      </CardTitle>
-                      <CardDescription className="text-base text-muted-foreground">
-                        See how HackGPT answers questions about your events
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="px-6 pb-6">
-                      <div className="space-y-4">
-                        <div className="bg-muted rounded-lg p-4">
-                          <p className="text-sm text-muted-foreground mb-2">User:</p>
-                          <p className="text-sm">What are the main tracks for this hackathon?</p>
-                        </div>
-                        <div className="bg-primary rounded-lg p-4">
-                          <p className="text-sm text-primary-foreground mb-2">HackGPT:</p>
-                          <p className="text-sm text-primary-foreground">
-                            This hackathon features 5 main tracks: AI/ML, FinTech, HealthTech, Climate Tech, and Future of Work. Each track has specific judging criteria and specialized mentors available.
-                          </p>
-                        </div>
-                        <div className="bg-muted rounded-lg p-4">
-                          <p className="text-sm text-muted-foreground mb-2">User:</p>
-                          <p className="text-sm">When is the demo day?</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </MagicCard>
+                      AI is typing...
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 bg-secondary/30">
+      <section id="features" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-foreground mb-4">
-              Powerful Features for Event Intelligence
+          <div className="text-center space-y-4 mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold">
+              Everything You Need to{" "}
+              <span className="text-primary">
+                Master Events
+              </span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Transform any hackathon or event URL into an intelligent, conversational knowledge base
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card className="bg-card border-border shadow-card hover:shadow-hover transition-all duration-200">
+              <CardHeader>
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <Globe className="w-6 h-6 text-primary" />
+                </div>
+                <CardTitle>Instant Event Intelligence</CardTitle>
+                <CardDescription>
+                  Submit any hackathon URL and our AI instantly crawls and processes all event information, making it searchable and accessible.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="bg-card border-border shadow-card hover:shadow-hover transition-all duration-200">
+              <CardHeader>
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <MessageSquare className="w-6 h-6 text-primary" />
+                </div>
+                <CardTitle>Smart Q&A System</CardTitle>
+                <CardDescription>
+                  Ask questions in natural language and get intelligent, contextual answers powered by GPT technology and your event data.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="bg-card border-border shadow-card hover:shadow-hover transition-all duration-200">
+              <CardHeader>
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <Database className="w-6 h-6 text-primary" />
+                </div>
+                <CardTitle>Unified Knowledge Hub</CardTitle>
+                <CardDescription>
+                  Manage multiple event URLs in one place with centralized chat history and intelligent knowledge management.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Dashboard Preview */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center space-y-4 mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold">
+              Your Command Center for{" "}
+              <span className="text-primary">
+                Event Intelligence
+              </span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Experience the power of HackGPT with our intuitive dashboard designed for event organizers and participants
             </p>
           </div>
 
-          {/* Interactive Dashboard Preview */}
-          <div className="mb-12">
-            <DashboardPreview />
-          </div>
-          
-          <div className="text-center">
-            <Link to="/auth">
-              <Button 
-                variant="primary" 
-                size="lg"
-                className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground font-medium transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
-              >
-                Experience This Dashboard
-              </Button>
-            </Link>
+          <div className="relative">
+            <Card className="bg-card border-border shadow-card overflow-hidden">
+              <CardContent className="p-0">
+                <div className="bg-secondary p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-4">
+                      <h3 className="text-lg font-semibold">Dashboard</h3>
+                      <Badge variant="secondary">3 Active Events</Badge>
+                    </div>
+                    <Button variant="primary" size="sm">Add Event</Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Event URLs */}
+                    <div className="space-y-4">
+                      <h4 className="font-medium flex items-center gap-2">
+                        <Globe className="w-4 h-4" />
+                        Event URLs
+                      </h4>
+                      <div className="space-y-2">
+                        {[
+                          { name: "TechCrunch Disrupt 2024", status: "Processing", color: "yellow" },
+                          { name: "MIT Hackathon", status: "Ready", color: "green" },
+                          { name: "ETHGlobal Paris", status: "Ready", color: "green" }
+                        ].map((event, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-background rounded-lg border border-border">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${event.color === 'green' ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                              <span className="text-sm">{event.name}</span>
+                            </div>
+                            <Badge variant={event.color === 'green' ? 'default' : 'secondary'} className="text-xs">
+                              {event.status}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* AI Assistant */}
+                    <div className="space-y-4">
+                      <h4 className="font-medium flex items-center gap-2">
+                        <Brain className="w-4 h-4" />
+                        AI Assistant
+                      </h4>
+                      <div className="space-y-3 p-4 bg-background rounded-lg border border-border min-h-[200px]">
+                        <div className="bg-muted rounded-lg p-3 max-w-[80%]">
+                          <p className="text-sm">What are the main tracks for TechCrunch Disrupt?</p>
+                        </div>
+                        <div className="bg-primary rounded-lg p-3 max-w-[85%] ml-auto">
+                          <p className="text-sm text-primary-foreground">
+                            TechCrunch Disrupt 2024 features 5 main tracks: AI/ML, FinTech, HealthTech, Climate Tech, and Future of Work. Each track has specific judging criteria and specialized mentors.
+                          </p>
+                        </div>
+                        <div className="bg-muted rounded-lg p-3 max-w-[70%]">
+                          <p className="text-sm">When is the demo day?</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <div className="text-center mt-8">
+              <Link to="/auth">
+                <Button variant="primary" size="lg">Experience This Dashboard</Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
