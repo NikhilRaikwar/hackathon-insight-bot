@@ -79,12 +79,6 @@ export const AuthPage = () => {
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-between mb-8">
-          <Link to="/" className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              Back to Home
-            </Button>
-          </Link>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <Brain className="w-5 h-5 text-primary-foreground" />
@@ -93,6 +87,12 @@ export const AuthPage = () => {
               HackGPT
             </span>
           </div>
+          <Link to="/" className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Home
+            </Button>
+          </Link>
         </div>
 
         <Card className="bg-card border-border">

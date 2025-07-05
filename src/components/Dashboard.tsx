@@ -18,6 +18,8 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ChatInterface } from './ChatInterface';
+import { MagicCard } from '@/components/magicui/magic-card';
+import { Pointer } from '@/components/magicui/pointer';
 
 interface Event {
   id: string;
@@ -161,81 +163,55 @@ export const Dashboard = () => {
           </div>
 
           {/* Event URL Form */}
-          <div className="max-w-md mx-auto w-full">
-            <Card>
-              <CardHeader>
-                <CardTitle>Add Event URL</CardTitle>
-                <CardDescription>
-                  Add a hackathon or event URL to create a custom Q&A chatbot
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmitUrl} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Event Name</Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      placeholder="e.g., DevPost Hackathon 2024"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="url">Event URL</Label>
-                    <Input
-                      id="url"
-                      name="url"
-                      type="url"
-                      placeholder="https://example.com/hackathon"
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={submitting}>
-                    {submitting ? 'Submitting...' : 'Submit URL'}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+          <div className="max-w-md mx-auto w-full relative">
+            <MagicCard
+              gradientColor="#3B82F6"
+              className="bg-card border-border shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              <Card className="border-none shadow-none bg-transparent">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    Add Event URL
+                    <Pointer>
+                      <div className="text-lg">👆</div>
+                    </Pointer>
+                  </CardTitle>
+                  <CardDescription>
+                    Add a hackathon or event URL to create a custom Q&A chatbot
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSubmitUrl} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Event Name</Label>
+                      <Input
+                        id="name"
+                        name="name"
+                        placeholder="e.g., DevPost Hackathon 2024"
+                        required
+                        className="border-border/50 focus:border-primary/50"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="url">Event URL</Label>
+                      <Input
+                        id="url"
+                        name="url"
+                        type="url"
+                        placeholder="https://example.com/hackathon"
+                        required
+                        className="border-border/50 focus:border-primary/50"
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={submitting}>
+                      {submitting ? 'Submitting...' : 'Submit URL'}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </MagicCard>
           </div>
 
-          {/* Events List */}
-          {loading ? (
-            <div className="text-center py-8">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <p className="mt-2 text-muted-foreground text-sm">Loading events...</p>
-            </div>
-          ) : events.length > 0 && (
-            <div className="max-w-2xl mx-auto w-full">
-              <h2 className="text-xl font-semibold mb-4">Your Events</h2>
-              <div className="space-y-3">
-                {events.map((event) => (
-                  <Card key={event.id} className="cursor-pointer hover:shadow-md transition-shadow"
-                        onClick={() => event.status === 'completed' && setSelectedEventId(event.id)}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-medium">{event.name}</h3>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {event.status === 'completed' ? 'Ready to chat' : `Status: ${event.status}`}
-                          </p>
-                        </div>
-                        <Button 
-                          size="sm" 
-                          disabled={event.status !== 'completed'}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedEventId(event.id);
-                          }}
-                        >
-                          {event.status === 'completed' ? 'Chat' : 'Processing...'}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </SidebarInset>
     </SidebarProvider>

@@ -3,8 +3,20 @@
 import * as React from "react"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/hooks/useAuth"
-import { Brain, MessageSquare } from "lucide-react"
+import { Brain, MessageSquare, Trash2 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
+import { toast } from 'sonner'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 import { NavMain } from "@/components/NavMain"
 import { NavUser } from "@/components/NavUser"
@@ -16,7 +28,11 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
 } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
 
 interface Event {
   id: string;
@@ -54,12 +70,23 @@ export function AppSidebar({ onEventSelect, ...props }: React.ComponentProps<typ
     }
   };
 
-  const chatHistoryItems = events.map(event => ({
-    title: event.name,
-    url: "#",
-    icon: MessageSquare,
-    onClick: () => onEventSelect?.(event.id)
-  }));
+  const handleDeleteEvent = async (eventId: string, eventName: string) => {
+    try {
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', eventId);
+
+      if (error) throw error;
+      
+      toast.success(`Deleted "${eventName}" successfully`);
+      loadEvents();
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast.error('Failed to delete event');
+    }
+  };
+
 
   const userData = {
     name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || 'User',
@@ -87,7 +114,61 @@ export function AppSidebar({ onEventSelect, ...props }: React.ComponentProps<typ
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={chatHistoryItems} />
+        <SidebarGroup>
+          <SidebarGroupLabel>Chat History</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {events.length === 0 ? (
+                <div className="p-2 text-sm text-muted-foreground text-center">
+                  No chats yet
+                </div>
+              ) : (
+                events.map((event) => (
+                  <SidebarMenuItem key={event.id} className="group">
+                    <SidebarMenuButton 
+                      onClick={() => onEventSelect?.(event.id)}
+                      className="w-full justify-between pr-1"
+                    >
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <MessageSquare className="h-4 w-4 flex-shrink-0" />
+                        <span className="truncate text-sm">{event.name}</span>
+                      </div>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Chat</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete "{event.name}"? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleDeleteEvent(event.id, event.name)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))
+              )}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userData} />
