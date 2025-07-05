@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
 import {
@@ -13,30 +14,39 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { AppSidebar } from '@/components/AppSidebar';
+} from '@/components/ui/breadcrumb';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { AppSidebar } from './AppSidebar';
 import { ChatInterface } from './ChatInterface';
 import { MagicCard } from '@/components/magicui/magic-card';
-import { SmoothCursor } from '@/components/magicui/smooth-cursor';
+import { useTheme } from 'next-themes';
+import { Brain } from 'lucide-react';
 
 interface Event {
   id: string;
   name: string;
   description: string | null;
   original_url: string;
-  status: 'pending' | 'crawling' | 'completed' | 'failed';
+  status: 'pending' | 'crawling' | 'completed' | 'failed' | string;
   created_at: string;
+  crawl_data?: any;
+  updated_at?: string;
+  user_id?: string;
 }
 
 export const Dashboard = () => {
   const { user } = useAuth();
+  const { theme } = useTheme();
+  const navigate = useNavigate();
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [selectedEventName, setSelectedEventName] = useState<string>('');
+
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [eventName, setEventName] = useState("");
+  const [eventUrl, setEventUrl] = useState("");
 
   const getUserDisplayName = () => {
     return user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || 'User';
@@ -49,77 +59,82 @@ export const Dashboard = () => {
   }, [user]);
 
   const loadEvents = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('user_id', user?.id)
+      .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setEvents((data as Event[]) || []);
-    } catch (error) {
+    if (error) {
       console.error('Error loading events:', error);
-      toast.error('Failed to load events');
-    } finally {
-      setLoading(false);
+      return;
     }
+
+    setEvents(data || []);
   };
 
   const handleEventSelect = (eventId: string) => {
+    if (!eventId) {
+      // Clear selected event and show the form
+      setSelectedEventId(null);
+      setSelectedEventName('');
+      return;
+    }
+    
     const event = events.find(e => e.id === eventId);
     setSelectedEventId(eventId);
     setSelectedEventName(event?.name || '');
   };
 
-  const handleSubmitUrl = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleDashboardClick = () => {
+    // Clear selected event and show the form
+    setSelectedEventId(null);
+    setSelectedEventName('');
+  };
+
+  const handleSubmitUrl = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
 
-    const formData = new FormData(e.currentTarget);
-    const url = formData.get('url') as string;
-    const name = formData.get('name') as string;
-
     try {
       // Basic URL validation
-      new URL(url);
+      new URL(eventUrl);
 
       const { data, error } = await supabase
         .from('events')
         .insert({
           user_id: user?.id,
-          name: name || 'Untitled Event',
-          original_url: url,
+          name: eventName || 'Untitled Event',
+          original_url: eventUrl,
           status: 'pending'
         })
         .select()
-        .single();
 
-      if (error) throw error;
+      if (error) {
+        toast.error('Failed to submit URL');
+        return;
+      }
 
       // Start crawling process
       const { error: crawlError } = await supabase.functions.invoke('crawl-event', {
-        body: { eventId: data.id, url }
+        body: { eventId: data[0].id, url: eventUrl }
       });
 
       if (crawlError) {
         console.error('Crawl error:', crawlError);
-        toast.error('Failed to start crawling process');
-      } else {
-        toast.success('URL submitted! Crawling started...');
-        loadEvents();
-        (e.target as HTMLFormElement).reset();
-        // Automatically open the chat for the new event
-        setSelectedEventId(data.id);
-        setSelectedEventName(data.name);
       }
+
+      toast.success('URL submitted! Crawling started...');
+      loadEvents();
+      // Clear the form
+      setEventName("");
+      setEventUrl("");
+      // Automatically open the chat for the new event
+      setSelectedEventId(data[0].id);
+      setSelectedEventName(data[0].name);
+
     } catch (error) {
-      if (error instanceof TypeError) {
-        toast.error('Please enter a valid URL');
-      } else {
-        console.error('Error submitting URL:', error);
-        toast.error('Failed to submit URL');
-      }
+      toast.error('Please enter a valid URL');
     } finally {
       setSubmitting(false);
     }
@@ -127,20 +142,32 @@ export const Dashboard = () => {
 
   return (
     <SidebarProvider>
-      <AppSidebar onEventSelect={handleEventSelect} selectedEventId={selectedEventId} />
+      <AppSidebar 
+        onEventSelect={handleEventSelect}
+        selectedEventId={selectedEventId}
+      />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2">
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
-            <Separator
-              orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4"
-            />
+            <Separator orientation="vertical" className="mr-2 h-4" />
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="/dashboard">
-                    HackGPT Dashboard
+                  <BreadcrumbLink 
+                    href="#" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleDashboardClick();
+                    }}
+                    className="hover:text-primary transition-colors flex items-center gap-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg bg-primary flex items-center justify-center">
+                        <Brain className="w-3 h-3 text-primary-foreground" />
+                      </div>
+                      <span className="font-medium">HackGPT Dashboard</span>
+                    </div>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 {selectedEventName && (
@@ -148,14 +175,6 @@ export const Dashboard = () => {
                     <BreadcrumbSeparator className="hidden md:block" />
                     <BreadcrumbItem>
                       <BreadcrumbPage>{selectedEventName}</BreadcrumbPage>
-                    </BreadcrumbItem>
-                  </>
-                )}
-                {!selectedEventName && (
-                  <>
-                    <BreadcrumbSeparator className="hidden md:block" />
-                    <BreadcrumbItem>
-                      <BreadcrumbPage>Home</BreadcrumbPage>
                     </BreadcrumbItem>
                   </>
                 )}
@@ -177,7 +196,6 @@ export const Dashboard = () => {
             />
           ) : (
             <>
-              {/* Welcome Message */}
               <div className="text-center py-8">
                 <h1 className="text-3xl font-bold text-foreground mb-2">
                   Welcome, {getUserDisplayName()}!
@@ -188,56 +206,96 @@ export const Dashboard = () => {
               </div>
 
               {/* Event URL Form */}
-              <div className="max-w-md mx-auto w-full relative">
+              <div className="w-full max-w-lg mx-auto">
                 <MagicCard
-                  gradientColor="#3B82F6"
-                  className="bg-card border-border shadow-lg hover:shadow-xl transition-all duration-300"
+                  gradientColor={theme === "dark" ? "#1a1a1a" : "#f8fafc"}
+                  className="relative overflow-hidden"
                 >
-                  <Card className="border-none shadow-none bg-transparent">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        Add Event URL
-                      </CardTitle>
-                      <CardDescription>
-                        Add a hackathon or event URL to create a custom Q&A chatbot
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <form onSubmit={handleSubmitUrl} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="name">Event Name</Label>
-                          <Input
-                            id="name"
-                            name="name"
-                            placeholder="e.g., DevPost Hackathon 2024"
-                            required
-                            className="border-border/50 focus:border-primary/50"
-                          />
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5" />
+                  <div className="relative z-10">
+                    <Card className="border-0 shadow-none bg-transparent">
+                      <CardHeader className="text-center pb-6">
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                          <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                          </svg>
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="url">Event URL</Label>
-                          <Input
-                            id="url"
-                            name="url"
-                            type="url"
-                            placeholder="https://example.com/hackathon"
-                            required
-                            className="border-border/50 focus:border-primary/50"
-                          />
-                        </div>
-                        <Button type="submit" className="w-full" disabled={submitting}>
-                          {submitting ? 'Submitting...' : 'Submit URL'}
-                        </Button>
-                      </form>
-                    </CardContent>
-                  </Card>
+                        <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                          Add Event URL
+                        </CardTitle>
+                        <CardDescription className="text-base text-muted-foreground max-w-sm mx-auto">
+                          Transform any hackathon URL into an intelligent Q&A chatbot
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="px-6 pb-6">
+                        <form onSubmit={handleSubmitUrl} className="space-y-6">
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="event-name" className="text-sm font-medium text-foreground">
+                                Event Name
+                              </Label>
+                              <div className="relative group">
+                                <Input
+                                  id="event-name"
+                                  type="text"
+                                  placeholder="e.g., DevPost Hackathon 2024"
+                                  value={eventName}
+                                  onChange={(e) => setEventName(e.target.value)}
+                                  required
+                                  className="h-12 px-4 border-border/50 bg-background/50 backdrop-blur-sm transition-all duration-300 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 group-hover:border-primary/30"
+                                />
+                                <div className="absolute inset-0 rounded-md bg-gradient-to-r from-primary/5 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="event-url" className="text-sm font-medium text-foreground">
+                                Event URL
+                              </Label>
+                              <div className="relative group">
+                                <Input
+                                  id="event-url"
+                                  type="url"
+                                  placeholder="https://example.com/hackathon"
+                                  value={eventUrl}
+                                  onChange={(e) => setEventUrl(e.target.value)}
+                                  required
+                                  className="h-12 px-4 border-border/50 bg-background/50 backdrop-blur-sm transition-all duration-300 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 group-hover:border-primary/30"
+                                />
+                                <div className="absolute inset-0 rounded-md bg-gradient-to-r from-primary/5 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="pt-2">
+                            <Button 
+                              type="submit" 
+                              className="w-full h-12 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground font-medium transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl" 
+                              disabled={submitting}
+                            >
+                              {submitting ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                                  <span>Processing...</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                  </svg>
+                                  <span>Create AI Assistant</span>
+                                </div>
+                              )}
+                            </Button>
+                          </div>
+                        </form>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </MagicCard>
               </div>
             </>
           )}
         </div>
       </SidebarInset>
-      <SmoothCursor />
     </SidebarProvider>
   );
 };

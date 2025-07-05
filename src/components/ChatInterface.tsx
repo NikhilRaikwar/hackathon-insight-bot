@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { ArrowLeft, Send, Bot } from 'lucide-react';
+import { ArrowLeft, Send, Bot, User } from 'lucide-react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { SmoothCursor } from '@/components/magicui/smooth-cursor';
@@ -29,41 +29,43 @@ interface ChatInterfaceProps {
 export const ChatInterface = ({ eventId, onBack, onEventSelect, isEmbedded = false }: ChatInterfaceProps) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [eventDetails, setEventDetails] = useState<any>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [eventName, setEventName] = useState<string>('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (user && eventId) {
-      initializeChat();
+    if (eventId) {
       loadEventDetails();
+      initializeChat();
     }
-  }, [user, eventId]);
+  }, [eventId]);
 
   useEffect(() => {
-    // Auto-scroll to bottom when new messages are added
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
   }, [messages]);
 
   const loadEventDetails = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('events')
-        .select('name')
-        .eq('id', eventId)
-        .single();
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('id', eventId)
+      .single();
 
-      if (error) throw error;
-      setEventName(data.name);
-    } catch (error) {
+    if (error) {
       console.error('Error loading event details:', error);
+      return;
     }
+
+    setEventDetails(data);
   };
 
   const initializeChat = async () => {
+    if (sessionId) return;
+
     try {
       // Check for existing session
       const { data: existingSessions, error: sessionError } = await supabase
@@ -87,7 +89,7 @@ export const ChatInterface = ({ eventId, onBack, onEventSelect, isEmbedded = fal
           .insert({
             user_id: user?.id,
             event_id: eventId,
-            title: `Chat about ${eventName || 'Event'}`
+            title: `Chat about ${eventDetails?.name || 'Event'}`
           })
           .select()
           .single();
@@ -116,186 +118,173 @@ export const ChatInterface = ({ eventId, onBack, onEventSelect, isEmbedded = fal
 
   const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!sessionId) return;
+    if (!inputValue.trim() || isLoading || !sessionId) return;
 
-    const formData = new FormData(e.currentTarget);
-    const content = formData.get('message') as string;
-
-    if (!content.trim()) return;
-
-    setLoading(true);
-
-    // Add user message to UI immediately
-    const userMessage: Message = {
-      id: `temp-${Date.now()}`,
-      role: 'user',
-      content,
+    const userMessage = {
+      id: Date.now().toString(),
+      role: 'user' as const,
+      content: inputValue.trim(),
       created_at: new Date().toISOString()
     };
-    setMessages(prev => [...prev, userMessage]);
 
-    // Clear input
-    (e.target as HTMLFormElement).reset();
+    setMessages(prev => [...prev, userMessage]);
+    setInputValue('');
+    setIsLoading(true);
 
     try {
       // Save user message to database
-      const { data: savedUserMessage, error: userError } = await supabase
+      const { error: saveError } = await supabase
         .from('chat_messages')
         .insert({
           session_id: sessionId,
           role: 'user',
-          content
-        })
-        .select()
-        .single();
+          content: userMessage.content
+        });
 
-      if (userError) throw userError;
+      if (saveError) {
+        console.error('Error saving message:', saveError);
+      }
 
-      // Update the temp message with real ID
-      setMessages(prev => prev.map(msg => 
-        msg.id === userMessage.id ? { 
-          id: savedUserMessage.id,
-          role: savedUserMessage.role as 'user' | 'assistant',
-          content: savedUserMessage.content,
-          created_at: savedUserMessage.created_at
-        } : msg
-      ));
-
-      // Call chatbot function
+      // Call the chat function
       const { data: response, error: chatError } = await supabase.functions.invoke('chat-with-event', {
         body: {
           sessionId,
           eventId,
-          message: content
+          message: userMessage.content
         }
       });
 
-      if (chatError) throw chatError;
+      if (chatError) {
+        console.error('Error calling chat function:', chatError);
+        toast.error('Failed to get response from AI');
+        setIsLoading(false);
+        return;
+      }
 
-      // Add assistant response
-      const assistantMessage: Message = {
-        id: response.messageId,
-        role: 'assistant',
-        content: response.content,
-        created_at: response.created_at
+      const assistantMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant' as const,
+        content: response?.content || 'Sorry, I could not process your request.',
+        created_at: new Date().toISOString()
       };
+
       setMessages(prev => [...prev, assistantMessage]);
 
+      // Save assistant message to database
+      await supabase
+        .from('chat_messages')
+        .insert({
+          session_id: sessionId,
+          role: 'assistant',
+          content: assistantMessage.content
+        });
+
     } catch (error) {
-      console.error('Error sending message:', error);
-      toast.error('Failed to send message');
-      
-      // Remove the user message if there was an error
-      setMessages(prev => prev.filter(msg => msg.id !== userMessage.id));
+      console.error('Error in chat:', error);
+      toast.error('An error occurred while chatting');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   const ChatContent = () => (
-    <>
+    <div className="flex flex-col h-full">
       {/* Header */}
-      {!isEmbedded && (
-        <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm">
-          <div className="flex items-center h-16 gap-4 px-4">
-            <Button variant="ghost" onClick={onBack} size="sm">
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-            <div>
-              <h1 className="text-lg font-semibold">Chat with Event Assistant</h1>
-              <p className="text-sm text-muted-foreground">{eventName}</p>
-            </div>
-          </div>
-        </header>
-      )}
+      <div className="flex items-center gap-3 p-4 border-b border-border">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onBack}
+          className="h-8 w-8 p-0"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="flex-1 min-w-0">
+          <h2 className="font-semibold text-sm truncate">
+            {eventDetails?.name || 'Chat'}
+          </h2>
+          <p className="text-xs text-muted-foreground truncate">
+            {eventDetails?.original_url}
+          </p>
+        </div>
+      </div>
 
-      {/* Chat Area */}
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        <Card className="h-full bg-card/50 backdrop-blur-sm border-border/50 flex flex-col">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-center text-sm text-muted-foreground">
-              Ask anything about this event!
-            </CardTitle>
-          </CardHeader>
-          
-          <CardContent className="flex-1 flex flex-col p-0">
-            {/* Messages */}
-            <ScrollArea className="flex-1 px-6" ref={scrollAreaRef}>
-              <div className="space-y-4 pb-4">
-                {messages.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground">
-                      Start a conversation by asking about the event details, prizes, rules, or anything else!
-                    </p>
+      {/* Messages */}
+      <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+        <div className="space-y-4">
+          {messages.length === 0 ? (
+            <div className="text-center py-8">
+              <Bot className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="font-medium mb-2">Start a conversation</h3>
+              <p className="text-sm text-muted-foreground">
+                Ask questions about {eventDetails?.name || 'this event'}
+              </p>
+            </div>
+          ) : (
+            messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex gap-3 ${
+                  message.role === 'user' ? 'justify-end' : 'justify-start'
+                }`}
+              >
+                {message.role === 'assistant' && (
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Bot className="h-4 w-4 text-primary" />
                   </div>
-                ) : (
-                  messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex gap-3 ${
-                        message.role === 'user' ? 'justify-end' : 'justify-start'
-                      }`}
-                    >
-                      {message.role === 'assistant' && (
-                        <Avatar className="h-8 w-8 bg-primary/10">
-                          <AvatarFallback className="text-primary text-xs">
-                            <Bot className="h-4 w-4" />
-                          </AvatarFallback>
-                        </Avatar>
-                      )}
-                       <div
-                         className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                           message.role === 'user'
-                             ? 'bg-primary text-primary-foreground ml-12'
-                             : 'bg-muted text-foreground mr-12'
-                         }`}
-                       >
-                         <div 
-                           className="text-sm whitespace-pre-wrap font-medium leading-relaxed"
-                           dangerouslySetInnerHTML={{
-                             __html: message.content
-                               .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                               .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                               .replace(/`(.*?)`/g, '<code class="bg-muted px-1 py-0.5 rounded text-xs">$1</code>')
-                               .replace(/\n/g, '<br/>')
-                           }}
-                         />
-                         <p className="text-xs opacity-50 mt-2">
-                           {new Date(message.created_at).toLocaleTimeString()}
-                         </p>
-                       </div>
-                      {message.role === 'user' && (
-                        <Avatar className="h-8 w-8 bg-muted">
-                          <AvatarFallback className="text-xs">
-                            {user?.email?.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                      )}
-                    </div>
-                  ))
+                )}
+                <Card className={`max-w-[80%] ${
+                  message.role === 'user' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'bg-muted'
+                }`}>
+                  <CardContent className="p-3">
+                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  </CardContent>
+                </Card>
+                {message.role === 'user' && (
+                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                    <User className="h-4 w-4 text-primary-foreground" />
+                  </div>
                 )}
               </div>
-            </ScrollArea>
-
-            {/* Input Form */}
-            <div className="border-t border-border/50 p-4">
-              <form onSubmit={handleSendMessage} className="flex gap-2">
-                <Input
-                  name="message"
-                  placeholder="Ask about event details, prizes, rules..."
-                  disabled={loading}
-                  className="flex-1"
-                />
-                <Button type="submit" disabled={loading} size="sm">
-                  <Send className="h-4 w-4" />
-                </Button>
-              </form>
+            ))
+          )}
+          {isLoading && (
+            <div className="flex gap-3 justify-start">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Bot className="h-4 w-4 text-primary" />
+              </div>
+              <Card className="bg-muted">
+                <CardContent className="p-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
+          )}
+        </div>
+      </ScrollArea>
+
+      {/* Input */}
+      <div className="p-4 border-t border-border">
+        <form onSubmit={handleSendMessage} className="flex gap-2">
+          <Input
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            placeholder="Type your message..."
+            disabled={isLoading}
+            className="flex-1"
+          />
+          <Button type="submit" size="sm" disabled={isLoading || !inputValue.trim()}>
+            <Send className="h-4 w-4" />
+          </Button>
+        </form>
       </div>
-    </>
+    </div>
   );
 
   if (isEmbedded) {

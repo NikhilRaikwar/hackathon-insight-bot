@@ -3,6 +3,7 @@
 import * as React from "react"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/hooks/useAuth"
+import { useNavigate } from "react-router-dom"
 import { Brain, MessageSquare, Trash2 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from 'sonner'
@@ -52,6 +53,7 @@ export function AppSidebar({
   selectedEventId?: string | null;
 }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [events, setEvents] = useState<Event[]>([]);
 
   useEffect(() => {
@@ -61,59 +63,66 @@ export function AppSidebar({
   }, [user]);
 
   const loadEvents = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('status', 'completed')
-        .order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('user_id', user?.id)
+      .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setEvents((data as Event[]) || []);
-    } catch (error) {
+    if (error) {
       console.error('Error loading events:', error);
+      return;
     }
+
+    setEvents(data || []);
   };
 
   const handleDeleteEvent = async (eventId: string, eventName: string) => {
-    try {
-      const { error } = await supabase
-        .from('events')
-        .delete()
-        .eq('id', eventId);
+    const { error } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', eventId)
+      .eq('user_id', user?.id);
 
-      if (error) throw error;
-      
-      toast.success(`Deleted "${eventName}" successfully`);
-      loadEvents();
-    } catch (error) {
-      console.error('Error deleting event:', error);
+    if (error) {
       toast.error('Failed to delete event');
+      return;
+    }
+
+    toast.success(`Deleted "${eventName}"`);
+    loadEvents();
+    
+    // If the deleted event was selected, clear the selection
+    if (selectedEventId === eventId) {
+      onEventSelect?.('');
     }
   };
 
-
   const userData = {
-    name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || 'User',
+    name: user?.user_metadata?.full_name || user?.user_metadata?.name || 'User',
     email: user?.email || '',
     avatar: user?.user_metadata?.avatar_url
   };
 
   return (
-    <Sidebar variant="inset" {...props}>
+    <Sidebar {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <a href="/dashboard">
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <Brain className="size-4" />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">HackGPT</span>
-                  <span className="truncate text-xs">AI Assistant</span>
-                </div>
-              </a>
+            <SidebarMenuButton size="lg" onClick={() => {
+              // Clear any selected event and navigate to dashboard
+              if (onEventSelect) {
+                onEventSelect('');
+              }
+              navigate('/dashboard');
+            }}>
+              <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                <Brain className="size-4" />
+              </div>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-medium">HackGPT</span>
+                <span className="truncate text-xs">AI Assistant</span>
+              </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
