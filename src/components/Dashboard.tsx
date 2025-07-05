@@ -19,7 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ChatInterface } from './ChatInterface';
 import { MagicCard } from '@/components/magicui/magic-card';
-import { Pointer } from '@/components/magicui/pointer';
+import { SmoothCursor } from '@/components/magicui/smooth-cursor';
 
 interface Event {
   id: string;
@@ -102,6 +102,8 @@ export const Dashboard = () => {
         toast.success('URL submitted! Crawling started...');
         loadEvents();
         (e.target as HTMLFormElement).reset();
+        // Automatically redirect to the chat page
+        setSelectedEventId(data.id);
       }
     } catch (error) {
       if (error instanceof TypeError) {
@@ -120,7 +122,8 @@ export const Dashboard = () => {
     return (
       <ChatInterface 
         eventId={selectedEventId} 
-        onBack={() => setSelectedEventId(null)} 
+        onBack={() => setSelectedEventId(null)}
+        onEventSelect={setSelectedEventId}
       />
     );
   }
@@ -172,9 +175,6 @@ export const Dashboard = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     Add Event URL
-                    <Pointer>
-                      <div className="text-lg">👆</div>
-                    </Pointer>
                   </CardTitle>
                   <CardDescription>
                     Add a hackathon or event URL to create a custom Q&A chatbot
@@ -214,6 +214,7 @@ export const Dashboard = () => {
 
         </div>
       </SidebarInset>
+      <SmoothCursor />
     </SidebarProvider>
   );
 };
