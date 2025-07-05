@@ -5,12 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { Brain, ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 export const AuthPage = () => {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, signInWithGoogle } = useAuth();
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -44,9 +45,10 @@ export const AuthPage = () => {
     const formData = new FormData(e.currentTarget);
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
+    const fullName = formData.get('fullName') as string;
 
     try {
-      const { error } = await signUp(email, password);
+      const { error } = await signUp(email, password, fullName);
       if (error) {
         toast.error('Failed to sign up: ' + error.message);
       } else {
@@ -59,25 +61,41 @@ export const AuthPage = () => {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    try {
+      const { error } = await signInWithGoogle();
+      if (error) {
+        toast.error('Failed to sign in with Google: ' + error.message);
+      }
+    } catch (error) {
+      toast.error('An unexpected error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-card flex items-center justify-center px-4">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-between mb-8">
+          <Link to="/" className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Home
+            </Button>
+          </Link>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <Brain className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold bg-gradient-text bg-clip-text text-transparent">
+            <span className="text-xl font-bold text-foreground">
               HackGPT
             </span>
           </div>
-          <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Home
-          </Link>
         </div>
 
-        <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+        <Card className="bg-card border-border">
           <CardHeader className="text-center space-y-2">
             <CardTitle className="text-2xl font-bold">Welcome to HackGPT</CardTitle>
             <CardDescription>Your AI-powered hackathon assistant</CardDescription>
@@ -90,6 +108,26 @@ export const AuthPage = () => {
               </TabsList>
               
               <TabsContent value="signin" className="space-y-4">
+                <Button 
+                  onClick={handleGoogleSignIn} 
+                  variant="outline" 
+                  className="w-full"
+                  disabled={loading}
+                >
+                  {loading ? 'Signing In...' : 'Continue with Google'}
+                </Button>
+                
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <Separator className="w-full" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Or continue with email
+                    </span>
+                  </div>
+                </div>
+
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="signin-email">Email</Label>
@@ -113,14 +151,45 @@ export const AuthPage = () => {
                       disabled={loading}
                     />
                   </div>
-                  <Button type="submit" className="w-full" variant="primary" disabled={loading}>
+                  <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? 'Signing In...' : 'Sign In'}
                   </Button>
                 </form>
               </TabsContent>
               
               <TabsContent value="signup" className="space-y-4">
+                <Button 
+                  onClick={handleGoogleSignIn} 
+                  variant="outline" 
+                  className="w-full"
+                  disabled={loading}
+                >
+                  {loading ? 'Signing Up...' : 'Continue with Google'}
+                </Button>
+                
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <Separator className="w-full" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Or continue with email
+                    </span>
+                  </div>
+                </div>
+
                 <form onSubmit={handleSignUp} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-fullname">Full Name</Label>
+                    <Input
+                      id="signup-fullname"
+                      name="fullName"
+                      type="text"
+                      placeholder="Enter your full name"
+                      required
+                      disabled={loading}
+                    />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>
                     <Input
@@ -144,7 +213,7 @@ export const AuthPage = () => {
                       minLength={6}
                     />
                   </div>
-                  <Button type="submit" className="w-full" variant="primary" disabled={loading}>
+                  <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? 'Creating Account...' : 'Sign Up'}
                   </Button>
                 </form>
